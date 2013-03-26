@@ -26,6 +26,7 @@ var tool = false;
 var tool_default = 'pencil';
 // This object holds the implementation of each drawing tool.
 var tools = {};
+var riderobj, started;
 
 function e_stage(e) {
     e._x = e.stageX; //event coordinates on stage
@@ -230,6 +231,20 @@ function init() {
 function newball(e) { //eventhandler for adding a new ball
     b = new Ball();
     stage.addChild(b.view);
+    riderobj = b.view;
+    started = true;
+}
+
+function ridercamera()
+{
+    var centerx = canvasm.width / 2;
+    var centery = canvasm.height / 2;
+    var rposx = riderobj.body.GetPosition().x * SCALE;
+    var rposy = riderobj.body.GetPosition().y * SCALE;
+    var dx = centerx - rposx;
+    var dy = centery - rposy;
+    stage.x = dx;
+    stage.y = dy;
 }
 
 function tick(e) { //tick event updating the world
@@ -237,4 +252,7 @@ function tick(e) { //tick event updating the world
     overlaystage.update();
 	world.Step(1/50, 5, 5); //best setting in my opinion otherwise world feels slow. Perhaps more calculations per step needed
 	world.ClearForces();
+    if(started)
+	    ridercamera();
+
 }
