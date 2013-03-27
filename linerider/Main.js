@@ -27,6 +27,7 @@ var tool_default = 'pencil';
 // This object holds the implementation of each drawing tool.
 var tools = {};
 var riderobj, started;
+var xl = 0, yl = 0
 
 function e_stage(e) {
     e._x = e.stageX; //event coordinates on stage
@@ -237,14 +238,27 @@ function newball(e) { //eventhandler for adding a new ball
 
 function ridercamera()
 {
-    var centerx = canvasm.width / 2;
-    var centery = canvasm.height / 2;
+    var centerx = ((canvasm.width / 2) - stage.x);
+    var centery = ((canvasm.height) / 2 - stage.y);
     var rposx = riderobj.body.GetPosition().x * SCALE;
     var rposy = riderobj.body.GetPosition().y * SCALE;
     var dx = centerx - rposx;
     var dy = centery - rposy;
-    stage.x = dx;
-    stage.y = dy;
+    var xd=0,yd=0;
+    var dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 100) {
+        xl = dx;
+        yl = dy;
+    }
+    else {
+        xd = dx - xl;
+        yd = dy - yl;
+        stage.x += xd;
+        stage.y += yd;
+        overlaystage.x += xd;
+        overlaystage.y += yd;
+    }
+
 }
 
 function tick(e) { //tick event updating the world
