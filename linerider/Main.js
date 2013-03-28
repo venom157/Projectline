@@ -27,7 +27,7 @@ var tool_default = 'pencil';
 // This object holds the implementation of each drawing tool.
 var tools = {};
 var riderobj, started;
-var xl = 0, yl = 0
+var xl = 0, yl = 0;
 
 function e_stage(e) {
     e._x = e.stageX; //event coordinates on stage
@@ -134,7 +134,7 @@ tools.line = function(){
             //lineFixtureDef.filter.groupIndex = -1;
             lineFixtureDef.shape = new box2d.b2PolygonShape;
             lineFixtureDef.shape.SetAsEdge(new box2d.b2Vec2(0, 0), new box2d.b2Vec2(tool.xw / SCALE, tool.yw / SCALE));
-            lineFixtureDef.friction = 0.1;
+            lineFixtureDef.friction = 0.5;
             world.CreateBody(lineBodyDef).CreateFixture(lineFixtureDef);//should also try something else here!
 
             drawobj.graphics
@@ -187,6 +187,7 @@ function init() {
     canvaso = document.getElementById("overlaycanvas");
     //canvasd = document.getElementById("debugcanvas");//debugcanvas is not used right now
     button_start = document.getElementById("startbutton");
+    button_stop = document.getElementById("stopbutton");
     ctx = canvasm.getContext('2d');
     ctx2 = canvaso.getContext('2d');
     //ctx3 = canvasd.getContext('2d');
@@ -203,6 +204,7 @@ function init() {
     }
     tool_select.addEventListener('change', e_tool_change, false);//event listeners for tool and button
     button_start.addEventListener('click', newball, false);
+    button_stop.addEventListener('click', deleteball, false);
     
     if (tools[tool_default]) {
         tool = new tools[tool_default]();
@@ -230,10 +232,22 @@ function init() {
 
 
 function newball(e) { //eventhandler for adding a new ball
-    b = new Ball();
-    stage.addChild(b.view);
-    riderobj = b.view;
-    started = true;
+    if (riderobj == null) {
+        b = new Ball();
+        riderobj = b.view;
+        stage.addChild(riderobj)
+        started = true;
+    }
+}
+
+function deleteball(e) { //eventhandler for deleting ball
+    if (riderobj != null) {
+        stage.removeChild(riderobj);
+        world.DestroyBody(riderobj.body);
+        riderobj = null;
+        started = false;
+        stage.x = stage.y = 0;
+    }
 }
 
 function ridercamera()
