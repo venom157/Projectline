@@ -16,12 +16,12 @@ var box2d = {
 
 //globals
 var canvasm, canvaso, canvasd;
-var b;
+var b,i=0;
 var ctx, ctx2, ctx3;
 var SCALE = 30;
 var stage, world, pixel_dist = 5;
 var drawobj_array = new Array();
-var lineobj, drawobj;
+var lineobj, drawobj, deleteobj;
 var tool = false;
 var tool_default = 'pencil';
 // This object holds the implementation of each drawing tool.
@@ -55,11 +55,6 @@ tools.pencil = function(){
         tool.x0 = e._x; //initial pen coordinates get stored in tool object
         tool.y0 = e._y;
         tool.started = true; //started drawing
-        drawobj = new createjs.Shape();
-        drawobj.graphics
-                     .setStrokeStyle(2, "square")
-                     .beginStroke("#000") //color
-                     .moveTo((tool.x0 - stage.x), (tool.y0 - stage.y)); //pen movement including stage offset
     };
 
     this.stagemousemove = function(e){
@@ -81,11 +76,17 @@ tools.pencil = function(){
                 lineFixtureDef.friction = 0.1; //friction a value between 0-1
                 world.CreateBody(lineBodyDef).CreateFixture(lineFixtureDef); //should try something else here:
 				//drawobj.body = world.CreateBody(lineBodyDef); //not tested
-				//drawobj.body.CreateFixture(lineFixtureDef);
-                drawobj.graphics.lineTo((tool.xf - stage.x), (tool.yf - stage.y));//draw line with pen to given x,y
+                //drawobj.body.CreateFixture(lineFixtureDef);
+                drawobj = new createjs.Shape();
+                drawobj.graphics
+                         .setStrokeStyle(2, "square")
+                         .beginStroke("#000") //color
+                         .moveTo((tool.x0 - stage.x), (tool.y0 - stage.y)) //pen movement including stage offset
+                         .lineTo((tool.xf - stage.x), (tool.yf - stage.y));//draw line with pen to given x,y
                 tool.x0 = tool.xf; //final point of the .. pixels saved
                 tool.y0 = tool.yf;
-                drawobj_array.push(drawobj);
+                stage.addChild(drawobj);//adding line objects
+                //i++;
             }
                 
         }
@@ -157,20 +158,13 @@ tools.drag = function () {
         tool.x0 = e._x;
         tool.y0 = e._y;
         tool.started = true;
+
     };
-	//this moves all the stages so that you can drag. Just simple math
+
     this.stagemousemove = function (e) {
         tool.xf = e._x;
         tool.yf = e._y;
         if (tool.started) {
-            offsetX = (tool.xf - tool.x0);
-            offsetY = (tool.yf - tool.y0);
-            stage.x += offsetX;
-            stage.y += offsetY;
-            overlaystage.x += offsetX;
-            overlaystage.y += offsetY;
-            tool.x0 = tool.xf;
-            tool.y0 = tool.yf;
         }
     };
 
@@ -181,7 +175,33 @@ tools.drag = function () {
     };
 };
 
+tools.erase = function () {
+    var tool = this;
+    this.started = false;
 
+    this.stagemousedown = function (e) {
+        tool.x0 = e._x;
+        tool.y0 = e._y;
+        tool.started = true;
+        deleteobj = stage.getObjectUnderPoint(tool.x0, tool.y0);
+        stage.removeChild(drawobj_array[0]);
+    };
+    //this moves all the stages so that you can drag. Just simple math
+    this.stagemousemove = function (e) {
+        tool.xf = e._x;
+        tool.yf = e._y;
+        if (tool.started) {
+            deleteobj = stage.getObjectUnderPoint(tool.xf, tool.yf);
+            stage.removeChild(deleteobj);
+        }
+    };
+
+    this.stagemouseup = function () {
+        if (tool.started) {
+            tool.started = false;
+        }
+    };
+};
 
 function init() {
     canvasm = document.getElementById("canvas");
@@ -221,7 +241,6 @@ function init() {
     overlaystage.onMouseMove = e_stage;
     overlaystage.onMouseUp = e_stage;
 
-    stage.addChild(drawobj);//adding line objects
     overlaystage.addChild(lineobj);
 
     createjs.Ticker.addListener(this);//use default tick
