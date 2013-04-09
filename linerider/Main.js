@@ -20,7 +20,7 @@ var b;
 var ctx, ctx2, ctx3;
 var SCALE = 30;
 var stage, world, pixel_dist = 5;
-var points_array = new Array();
+var drawobj_array = new Array();
 var lineobj, drawobj;
 var tool = false;
 var tool_default = 'pencil';
@@ -51,11 +51,11 @@ function e_tool_change(e){
 tools.pencil = function(){
     var tool = this;
     this.started = false;
-    
     this.stagemousedown = function(e){ //movedown eventhandler
         tool.x0 = e._x; //initial pen coordinates get stored in tool object
         tool.y0 = e._y;
         tool.started = true; //started drawing
+        drawobj = new createjs.Shape();
         drawobj.graphics
                      .setStrokeStyle(2, "square")
                      .beginStroke("#000") //color
@@ -85,6 +85,7 @@ tools.pencil = function(){
                 drawobj.graphics.lineTo((tool.xf - stage.x), (tool.yf - stage.y));//draw line with pen to given x,y
                 tool.x0 = tool.xf; //final point of the .. pixels saved
                 tool.y0 = tool.yf;
+                drawobj_array.push(drawobj);
             }
                 
         }
@@ -210,9 +211,7 @@ function init() {
         tool = new tools[tool_default]();
         tool_select.value = tool_default;
     }
-
-    drawobj = new createjs.Shape(); //adding line shape
-    lineobj = new createjs.Shape();
+    lineobj = new createjs.Shape();//adding line shape
     
     /*canvasd.onmousedown = e_stage;
     canvasd.onmousemove = e_stage;
@@ -232,12 +231,12 @@ function init() {
 
 
 function newball(e) { //eventhandler for adding a new ball
-    if (riderobj == null) {
+    //if (riderobj == null) {
         b = new Ball();
         riderobj = b.view;
         stage.addChild(riderobj)
         started = true;
-    }
+    //}
 }
 
 function deleteball(e) { //eventhandler for deleting ball
