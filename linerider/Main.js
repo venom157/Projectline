@@ -165,6 +165,14 @@ tools.drag = function () {
         tool.xf = e._x;
         tool.yf = e._y;
         if (tool.started) {
+            offsetX = (tool.xf - tool.x0);
+            offsetY = (tool.yf - tool.y0);
+            stage.x += offsetX;
+            stage.y += offsetY;
+            overlaystage.x += offsetX;
+            overlaystage.y += offsetY;
+            tool.x0 = tool.xf;
+            tool.y0 = tool.yf;
         }
     };
 
@@ -186,13 +194,28 @@ tools.erase = function () {
         deleteobj = stage.getObjectUnderPoint(tool.x0, tool.y0);
         stage.removeChild(drawobj_array[0]);
     };
-    //this moves all the stages so that you can drag. Just simple math
+
     this.stagemousemove = function (e) {
         tool.xf = e._x;
         tool.yf = e._y;
         if (tool.started) {
+            var point = {
+                x: (tool.xf) / SCALE,
+                y: (tool.yf) / SCALE
+            };
             deleteobj = stage.getObjectUnderPoint(tool.xf, tool.yf);
             stage.removeChild(deleteobj);
+            var body;
+            world.QueryPoint(function (fixture) { //wellicht query aabb doen in plaats van single point. Hij mist alles.
+                var inside = fixture.GetBody();
+                if (inside)
+                {
+                    body = fixture.GetBody();
+                    return false;
+                }
+            }, point);
+
+
         }
     };
 
