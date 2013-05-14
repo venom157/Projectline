@@ -11,7 +11,8 @@ var box2d = {
 	b2MassData : Box2D.Collision.Shapes.b2MassData,
 	b2PolygonShape : Box2D.Collision.Shapes.b2PolygonShape,
 	b2CircleShape : Box2D.Collision.Shapes.b2CircleShape,
-	b2DebugDraw : Box2D.Dynamics.b2DebugDraw
+	b2DebugDraw : Box2D.Dynamics.b2DebugDraw,
+	b2AABB : Box2D.Collision.b2AABB
 };
 
 //globals
@@ -186,6 +187,7 @@ tools.drag = function () {
 tools.erase = function () {
     var tool = this;
     this.started = false;
+    var mousePVec, body;    
 
     this.stagemousedown = function (e) {
         tool.x0 = e._x;
@@ -199,25 +201,27 @@ tools.erase = function () {
         tool.xf = e._x;
         tool.yf = e._y;
         if (tool.started) {
-            var point = {
-                x: (tool.xf) / SCALE,
-                y: (tool.yf) / SCALE
-            };
+            var scaledx = (tool.xf) / SCALE; //canvasoffset
+            var scaledy = (tool.yf) / SCALE;
+			var aabb = new box2d.b2AABB();
+			mousePVec = new box2d.b2Vec2(scaledx, scaledy);
+			aabb.lowerBound.Set(scaledx - 0.2, scaledy - 0.2);
+			aabb.upperBound.Set(scaledx + 0.2, scaledy + 0.2);
+						
             deleteobj = stage.getObjectUnderPoint(tool.xf, tool.yf);
             stage.removeChild(deleteobj);
-            var body;
-            world.QueryPoint(function (fixture) { //wellicht query aabb doen in plaats van single point. Hij mist alles.
-                var inside = fixture.GetBody();
-                if (inside)
-                {
-                    body = fixture.GetBody();
-                    return false;
-                }
-            }, point);
-
-
+			body = null;
+			world.QueryAABB(getBodyCB, aabb);
+			if(body){
+				world.DestroyBody(body);
+			}
         }
     };
+	
+	function getBodyCB(fixture) {
+                  body = fixture.GetBody();
+                  return false;
+         }
 
     this.stagemouseup = function () {
         if (tool.started) {
