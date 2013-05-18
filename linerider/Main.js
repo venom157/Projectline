@@ -22,7 +22,7 @@ var ctx, ctx2, ctx3;
 var SCALE = 30;
 var stage, world, pixel_dist = 5;
 var drawobj_array = new Array();
-var lineobj, drawobj, deleteobj;
+var lineobj, drawobj, deleteobj, eraseboxobj;
 var tool = false;
 var tool_default = 'pencil';
 // This object holds the implementation of each drawing tool.
@@ -187,7 +187,7 @@ tools.drag = function () {
 tools.erase = function () {
     var tool = this;
     this.started = false;
-    var mousePVec, body;    
+    var mousePVec, body;
 
     this.stagemousedown = function (e) {
         tool.x0 = e._x;
@@ -195,6 +195,9 @@ tools.erase = function () {
         tool.started = true;
         deleteobj = stage.getObjectUnderPoint(tool.x0, tool.y0);
         stage.removeChild(drawobj_array[0]);
+        eraseboxobj.graphics
+                    .beginStroke("#ABABAB")
+                    .rect(tool.x0 - 6 - stage.x, tool.y0 - 6 - stage.y, 12, 12);
     };
 
     this.stagemousemove = function (e) {
@@ -203,13 +206,28 @@ tools.erase = function () {
         if (tool.started) {
             var scaledx = (tool.xf) / SCALE; //canvasoffset
             var scaledy = (tool.yf) / SCALE;
+            var j,k,qx,qy;
+            var reccorner = { 
+                x:tool.xf - 6 - stage.x,
+                y:tool.yf - 6 - stage.y
+            };
 			var aabb = new box2d.b2AABB();
 			mousePVec = new box2d.b2Vec2(scaledx, scaledy);
 			aabb.lowerBound.Set(scaledx - 0.2, scaledy - 0.2);
 			aabb.upperBound.Set(scaledx + 0.2, scaledy + 0.2);
-						
-            deleteobj = stage.getObjectUnderPoint(tool.xf, tool.yf);
-            stage.removeChild(deleteobj);
+
+			eraseboxobj.graphics.clear()
+            .beginStroke("#ABABAB")
+            .rect(reccorner.x, reccorner.y, 12, 12);
+
+			for (j = 1; j <= 12; j++) {
+			    qy = reccorner.y + j;
+			    for (k = 1; k <= 12; k++) {
+			        qx = reccorner.x + k;
+			        deleteobj = stage.getObjectUnderPoint(qx, qy);//makes the app lag:( probrably replace with drawing white lines
+			        stage.removeChild(deleteobj);
+			    }
+			}            
 			body = null;
 			world.QueryAABB(getBodyCB, aabb);
 			if(body){
@@ -226,6 +244,7 @@ tools.erase = function () {
     this.stagemouseup = function () {
         if (tool.started) {
             tool.started = false;
+            eraseboxobj.graphics.clear();
         }
     };
 };
@@ -259,7 +278,7 @@ function init() {
         tool_select.value = tool_default;
     }
     lineobj = new createjs.Shape();//adding line shape
-    
+    eraseboxobj = new createjs.Shape();
     /*canvasd.onmousedown = e_stage;
     canvasd.onmousemove = e_stage;
     canvasd.onmouseup = e_stage;*/
@@ -269,7 +288,7 @@ function init() {
     overlaystage.onMouseUp = e_stage;
 
     overlaystage.addChild(lineobj);
-
+    overlaystage.addChild(eraseboxobj);
     createjs.Ticker.addListener(this);//use default tick
     createjs.Ticker.setFPS(100); //100fps other settings feel slow
     createjs.Ticker.useRAF = true;//forgot what it meant
@@ -292,6 +311,7 @@ function deleteball(e) { //eventhandler for deleting ball
         riderobj = null;
         started = false;
         stage.x = stage.y = 0;
+        overlaystage.x = overlaystage.y = 0;
     }
 }
 
